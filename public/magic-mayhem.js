@@ -7,6 +7,7 @@ let peer_id = '';
 let peer;
 let online_game;
 let isHost = false;
+let isSpectator = false;
 
 const PLATEAU_WIDTH = 10;
 const PLATEAU_Y = 5;
@@ -76,7 +77,7 @@ const SUMMONS_MAP = {
   }
 };
 
-const socket = new WebSocket('ws://localhost:3000/ws');
+const socket = new WebSocket(`ws://${window.location.hostname}:3000/ws`);
 socket.onopen = () => {
   console.log('Connected to server');
   if (!peer_id) {
