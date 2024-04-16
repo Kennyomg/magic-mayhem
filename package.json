@@ -1,0 +1,21 @@
+{
+  "name": "magicmayhamludumdare55",
+  "module": "server.ts",
+  "type": "module",
+  "scripts": {
+    "start": "bun run server.ts",
+    "dev": "bun --watch server.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/express-ws": "^3.0.4"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "express-ws": "^5.0.2",
+    "peer": "^1.0.2"
+  }
+}
