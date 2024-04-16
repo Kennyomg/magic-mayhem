@@ -77,7 +77,11 @@ const SUMMONS_MAP = {
   }
 };
 
-const socket = new WebSocket(`ws://${window.location.hostname}:3000/ws`);
+if (window.location.hostname.includes('localhost')) {
+  const socket = new WebSocket(`ws://${window.location.hostname}:3000/ws`);
+} else {
+  const socket = new WebSocket(`wss://${window.location.hostname}/ws`);
+}
 socket.onopen = () => {
   console.log('Connected to server');
   if (!peer_id) {
