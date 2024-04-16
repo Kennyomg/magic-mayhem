@@ -76,11 +76,11 @@ const SUMMONS_MAP = {
     mana_cost: 3,
   }
 };
-
+let socket;
 if (window.location.hostname.includes('localhost')) {
-  const socket = new WebSocket(`ws://${window.location.hostname}:3000/ws`);
+  socket = new WebSocket(`ws://${window.location.hostname}:3000/ws`);
 } else {
-  const socket = new WebSocket(`wss://${window.location.hostname}/ws`);
+  socket = new WebSocket(`wss://${window.location.hostname}/ws`);
 }
 socket.onopen = () => {
   console.log('Connected to server');
