@@ -15,12 +15,22 @@ br {
 }
 
 .cell {
-  display: inline-block;
+  display: block;
+  float: left;
   font-size: 25px;
+  line-height: 1;
   font-family: 'Courier New', Courier, monospace;
   font-weight: bold;
   color: white;
   background-color: black;
+}
+
+#game br {
+  display: block;
+  height: 0;
+  line-height: 0;
+  content: "";
+  margin: 0;
 }
 
 .blue {
@@ -62,11 +72,17 @@ br {
   border: 2px solid white;
   border-radius: 50%;
   cursor: pointer;
-  margin-bottom: 10px;
+  max-width: 100%;
+  text-align: center;
+  line-height: 1;
 }
 
-.summon-button:last-child {
-  margin-bottom: 0;
+
+#player-buttons, #opponent-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100vh - 20px);
 }
 
 #player-buttons > .summon-button:hover, #player-buttons > .summon-button:active {

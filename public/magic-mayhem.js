@@ -1,18 +1,30 @@
-const gameEl = document.getElementById('game');
 
 const LEVEL_WIDTH = 40;
 const LEVEL_HEIGHT = 20;
-let WINDOW_SPACE_AVAILABLE;
+let WINDOW_AVAILABLE_HEIGHT;
 let BUTTON_AREA_WIDTH;
 let GAME_SCREEN_HEIGHT;
 let GAME_SCREEN_WIDTH;
 
+
+
+// Detect whether device supports orientationchange event, otherwise fall back to
+// the resize event.
+let supportsOrientationChange = "onorientationchange" in window && "screen" in window;
+let orientationEvent = supportsOrientationChange ? "orientationchange" : "resize";
+
+let screenOrientationType = screen?.orientation?.type || "landscape-primary";
+let screenOrientationAngle = screen?.orientation?.angle || 0;
+
+const gameEl = document.getElementById('game');
+
 function setGameDimensions() {
-  WINDOW_SPACE_AVAILABLE = window.innerHeight - gameEl.offsetTop;
-  BUTTON_AREA_WIDTH = Math.min(100, WINDOW_SPACE_AVAILABLE / 4);
+  WINDOW_AVAILABLE_HEIGHT = (supportsOrientationChange ? screen.height : window.innerHeight) - gameEl.offsetTop;
+  GAME_SCREEN_HEIGHT = WINDOW_AVAILABLE_HEIGHT - 50;
+  GAME_SCREEN_WIDTH = 25 / 18 * GAME_SCREEN_HEIGHT
   
-    GAME_SCREEN_HEIGHT = WINDOW_SPACE_AVAILABLE - 40;
-    GAME_SCREEN_WIDTH = 25 / 18 * GAME_SCREEN_HEIGHT
+  BUTTON_AREA_WIDTH = Math.max(75, Math.min(100, (supportsOrientationChange ? screen.width : window.innerWidth) - GAME_SCREEN_WIDTH - 20));
+  console.log({BUTTON_AREA_WIDTH})
 
   if (GAME_SCREEN_WIDTH > window.innerWidth) {
     GAME_SCREEN_WIDTH = window.innerWidth - 20;
@@ -29,10 +41,24 @@ function setGameDimensions() {
       cell.style.fontSize = px(GAME_SCREEN_HEIGHT / LEVEL_HEIGHT);
     }
   }
+  
+  for (const button of document.getElementsByClassName('summon-button')) {
+    button.style.width = px(BUTTON_AREA_WIDTH);
+    button.style.fontSize = px(BUTTON_AREA_WIDTH);
+  }
 }
 
 setGameDimensions();
-window.addEventListener('resize', () => setGameDimensions());
+window.addEventListener(orientationEvent, function() {
+    if (supportsOrientationChange && screenOrientationType !== screen.orientation.type) {
+      screenOrientationType = screen.orientation.type;
+      screenOrientationAngle = screen.orientation.angle;
+    }
+    setGameDimensions();
+}, false);
+if (supportsOrientationChange) {
+  window.addEventListener('resize', () => setGameDimensions(), false);
+}
 
 let GAME_SPEED = 3
 
