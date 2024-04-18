@@ -538,7 +538,7 @@ socket.onclose = () => {
       if (drawCounter > 10 && !(playerMana || opponentMana)) {
         gamePaused = true;
         gameOver = true;
-        gameOverEl.innerHTML = 'Draw!!\r\nPress R or Tap to restart the game.';
+        gameOverEl.innerHTML = 'Draw!!\r\nPress R or Tap here.';
         gameOverEl.classList.remove('hidden');
         drawLevel(level, summons, playerMana, opponentMana);
       }
@@ -548,7 +548,7 @@ socket.onclose = () => {
       if (!summons.some(summon => summon.team === 'player') && !playerMana) {
         gamePaused = true;
         gameOver = true;
-        gameOverEl.innerHTML = `<span style="color:${OPPONENT_COLOR};">${OPPONENT_COLOR.toUpperCase()}</span> Won!!\r\nPress R or Tap to restart the game.`;
+        gameOverEl.innerHTML = `<span style="color:${OPPONENT_COLOR};">${OPPONENT_COLOR.toUpperCase()}</span> Won!!\r\nPress R or Tap here.`;
         gameOverEl.classList.remove('hidden');
         drawLevel(level, summons, playerMana, opponentMana);
       }
@@ -556,7 +556,7 @@ socket.onclose = () => {
       if (!summons.some(summon => summon.team === 'opponent') && !opponentMana) {
         gamePaused = true;
         gameOver = true;
-        gameOverEl.innerHTML = `<span style="color:${PLAYER_COLOR};">${PLAYER_COLOR.toUpperCase()}</span> Won!!\r\nPress R or Tap to restart the game.`;
+        gameOverEl.innerHTML = `<span style="color:${PLAYER_COLOR};">${PLAYER_COLOR.toUpperCase()}</span> Won!!\r\nPress R or Tap here.`;
         gameOverEl.classList.remove('hidden');
         drawLevel(level, summons, playerMana, opponentMana);
       }
