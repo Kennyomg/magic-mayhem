@@ -11,12 +11,12 @@ function setGameDimensions() {
   WINDOW_SPACE_AVAILABLE = window.innerHeight - gameEl.offsetTop;
   BUTTON_AREA_WIDTH = Math.min(100, WINDOW_SPACE_AVAILABLE / 4);
   
+    GAME_SCREEN_HEIGHT = WINDOW_SPACE_AVAILABLE - 40;
+    GAME_SCREEN_WIDTH = 25 / 18 * GAME_SCREEN_HEIGHT
+
   if (GAME_SCREEN_WIDTH > window.innerWidth) {
     GAME_SCREEN_WIDTH = window.innerWidth - 20;
     GAME_SCREEN_HEIGHT = 18 / 25 * GAME_SCREEN_WIDTH;
-  } else {
-    GAME_SCREEN_HEIGHT = WINDOW_SPACE_AVAILABLE - 40;
-    GAME_SCREEN_WIDTH = 25 / 18 * GAME_SCREEN_HEIGHT;
   }
 
   gameEl.style.width = px(GAME_SCREEN_WIDTH);
