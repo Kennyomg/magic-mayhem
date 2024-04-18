@@ -21,7 +21,7 @@ const gameEl = document.getElementById('game');
 function setGameDimensions() {
   WINDOW_AVAILABLE_HEIGHT = (supportsOrientationChange ? screen.height : window.innerHeight) - gameEl.offsetTop;
   GAME_SCREEN_HEIGHT = WINDOW_AVAILABLE_HEIGHT - 50;
-  GAME_SCREEN_WIDTH = 25 / 18 * GAME_SCREEN_HEIGHT
+  GAME_SCREEN_WIDTH = 25 / 18 * GAME_SCREEN_HEIGHT;
   
   BUTTON_AREA_WIDTH = Math.max(75, Math.min(100, (supportsOrientationChange ? screen.width : window.innerWidth) - GAME_SCREEN_WIDTH - 20));
   console.log({BUTTON_AREA_WIDTH})

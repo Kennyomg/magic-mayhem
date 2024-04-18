@@ -82,7 +82,7 @@ br {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: calc(100vh - 20px);
+  max-height: calc(100svh - 20px);
 }
 
 #player-buttons > .summon-button:hover, #player-buttons > .summon-button:active {
