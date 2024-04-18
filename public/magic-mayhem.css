@@ -64,7 +64,7 @@ br {
 .summon-button {
   display: inline-block;
   aspect-ratio: 1/1;
-  /* font-size: 40px; */
+  font-size: min(100px, calc((100svh / 3) - 20px));
   font-family: 'Courier New', Courier, monospace;
   font-weight: bold;
   color: white;
@@ -82,7 +82,7 @@ br {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: calc(100dvh - 20px);
+  width: min(100px, calc((100svh / 3) - 20px));
 }
 
 #player-buttons > .summon-button:hover, #player-buttons > .summon-button:active {

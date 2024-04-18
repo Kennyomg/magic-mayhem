@@ -41,11 +41,6 @@ function setGameDimensions() {
       cell.style.fontSize = px(GAME_SCREEN_HEIGHT / LEVEL_HEIGHT);
     }
   }
-  
-  for (const button of document.getElementsByClassName('summon-button')) {
-    button.style.width = px(BUTTON_AREA_WIDTH);
-    button.style.fontSize = px(BUTTON_AREA_WIDTH);
-  }
 }
 
 setGameDimensions();
@@ -186,9 +181,16 @@ socket.onclose = () => {
   let opponentMana = SUMMONER_MAX_MANA;
 
   function configureButton(who, button) {
-    button.style.width = px(BUTTON_AREA_WIDTH);
-    button.style.fontSize = px(BUTTON_AREA_WIDTH);
-    button.onclick = () => {
+    function handleSummon(event) {
+      // event.preventDefault();
+      // const touches = event.touches || [];
+      
+      // touches.forEach(touch => {
+      //   const { clientX, clientY } = touch;
+      //   const { left, top, width, height } = button.getBoundingClientRect();
+      //   if (clientX < left || clientX > left + width || clientY < top || clientY > top + height) return;
+      // });
+
       if (gamePaused || gameOver || isSpectator || (online_game && !isHost)) return;
       if (!playerSpawningSummon && who === 'player') {
         playerSpawningSummon = button.dataset.summon;
@@ -197,7 +199,10 @@ socket.onclose = () => {
         if (online_game && isHost) return;
         opponentSpawningSummon = button.dataset.summon;
       }
-    };
+    }
+    
+    button.addEventListener('click', handleSummon);
+    button.addEventListener('touchend', handleSummon);
   }
 
   playerButtons = document.getElementById('player-buttons');
