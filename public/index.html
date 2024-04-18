@@ -14,12 +14,14 @@
   <div class="mobile-landscape">
     <div style="position: relative; width: fit-content;">
       <h1 class="show-on-root" style="text-align: center;">Magic Mayhem</h1>
+      <!-- Playing field -->
       <div id="game"></div>
       <div id="pause" class="hidden">Game Paused</div>
       <div id="game-over" class="hidden"></div>
       <div class="show-on-root" style="font-size: large;">
         <br>
-        <div id="games"></div>
+        <!-- List of online games -->
+        <div id="games" style=></div>
         <br>
         Game speed: <span id="game-speed">not set</span> <br><br>
         Summons: <br> <span id="summons">not set</span> <br><br>
@@ -42,14 +44,14 @@
       </div>
     </div>
     <div id="player-buttons" class="mobile middle left vertical">
-      <button id="summon-blue-l" data-summon="LIGHT" class="summon-button">L</button>
-      <button id="summon-blue-m" data-summon="MEDIUM" class="summon-button">M</button>
-      <button id="summon-blue-h" data-summon="HEAVY" class="summon-button">H</button>
+      <button data-summon="HEAVY" class="summon-button">H</button>
+      <button data-summon="MEDIUM" class="summon-button">M</button>
+      <button data-summon="LIGHT" class="summon-button">L</button>
     </div>
     <div id="opponent-buttons" class="mobile middle right vertical">
-      <button id="summon-red-l" data-summon="LIGHT" class="summon-button">L</button>
-      <button id="summon-red-m" data-summon="MEDIUM" class="summon-button">M</button>
-      <button id="summon-red-h" data-summon="HEAVY" class="summon-button">H</button>
+      <button data-summon="HEAVY" class="summon-button">H</button>
+      <button data-summon="MEDIUM" class="summon-button">M</button>
+      <button data-summon="LIGHT" class="summon-button">L</button>
     </div>
   </div>
   <div id="warning-message" class="mobile center top">

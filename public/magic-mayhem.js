@@ -1,5 +1,38 @@
+const gameEl = document.getElementById('game');
+
 const LEVEL_WIDTH = 40;
 const LEVEL_HEIGHT = 20;
+let WINDOW_SPACE_AVAILABLE;
+let BUTTON_AREA_WIDTH;
+let GAME_SCREEN_HEIGHT;
+let GAME_SCREEN_WIDTH;
+
+function setGameDimensions() {
+  WINDOW_SPACE_AVAILABLE = window.innerHeight - gameEl.offsetTop;
+  BUTTON_AREA_WIDTH = Math.min(100, WINDOW_SPACE_AVAILABLE / 4);
+  
+  if (GAME_SCREEN_WIDTH > window.innerWidth) {
+    GAME_SCREEN_WIDTH = window.innerWidth - 20;
+    GAME_SCREEN_HEIGHT = 18 / 25 * GAME_SCREEN_WIDTH;
+  } else {
+    GAME_SCREEN_HEIGHT = WINDOW_SPACE_AVAILABLE - 40;
+    GAME_SCREEN_WIDTH = 25 / 18 * GAME_SCREEN_HEIGHT;
+  }
+
+  gameEl.style.width = px(GAME_SCREEN_WIDTH);
+  gameEl.style.height = px(GAME_SCREEN_HEIGHT);
+
+  if (gameEl.children.length) {
+    for (const cell of gameEl.getElementsByClassName('cell')) {
+      cell.style.width = px(GAME_SCREEN_WIDTH / LEVEL_WIDTH);
+      cell.style.height = px(GAME_SCREEN_HEIGHT / LEVEL_HEIGHT);
+      cell.style.fontSize = px(GAME_SCREEN_HEIGHT / LEVEL_HEIGHT);
+    }
+  }
+}
+
+setGameDimensions();
+window.addEventListener('resize', () => setGameDimensions());
 
 let GAME_SPEED = 3
 
@@ -77,6 +110,8 @@ const SUMMONS_MAP = {
   }
 };
 
+
+
 const summonsEl = document.getElementById('summons');
 summonsEl.innerHTML = 'type, manacost, health, attack, speed<br/>';
 summonsEl.innerHTML += Object.values(SUMMONS_MAP).map(summon => {
@@ -108,8 +143,7 @@ socket.onclose = () => {
 
 (() => {
   console.log('magic-mayhem.js loaded');
-  
-  const gameEl = document.getElementById('game');
+
   const gameSpeedEl = document.getElementById('game-speed');
   const gameOverEl = document.getElementById('game-over');
   gameSpeedEl.textContent = GAME_SPEED.toString();
@@ -118,29 +152,40 @@ socket.onclose = () => {
   let gameOver = false;
   let drawCounter = 0;
   let didAnythingMove = false;
-  
+
   let summons = [];
   let playerSpawningSummon = '';
   let opponentSpawningSummon = '';
   let playerMana = SUMMONER_MAX_MANA;
   let opponentMana = SUMMONER_MAX_MANA;
 
-  playerButtons = document.getElementById('player-buttons');
-  playerButtons.childNodes.forEach(button => {
+  function configureButton(who, button) {
+    button.style.width = px(BUTTON_AREA_WIDTH);
+    button.style.fontSize = px(BUTTON_AREA_WIDTH);
     button.onclick = () => {
-      if (gamePaused || playerSpawningSummon) return;
-      playerSpawningSummon = button.dataset.summon;
+      if (gamePaused || gameOver || isSpectator || (online_game && !isHost)) return;
+      if (!playerSpawningSummon && who === 'player') {
+        playerSpawningSummon = button.dataset.summon;
+      }
+      if (!opponentSpawningSummon && who === 'opponent') {
+        if (online_game && isHost) return;
+        opponentSpawningSummon = button.dataset.summon;
+      }
     };
-  });
+  }
+
+  playerButtons = document.getElementById('player-buttons');
+  playerButtons.width = BUTTON_AREA_WIDTH;
+  for (const button of playerButtons.getElementsByClassName('summon-button')) {
+    configureButton('player', button);
+  }
 
   opponentButtons = document.getElementById('opponent-buttons');
-  opponentButtons.childNodes.forEach(button => {
-    button.onclick = () => {
-      if (gamePaused || opponentSpawningSummon) return;
-      opponentSpawningSummon = button.dataset.summon;
-    };
-  });
-  
+  opponentButtons.width = BUTTON_AREA_WIDTH;
+  for (const button of opponentButtons.getElementsByClassName('summon-button')) {
+    configureButton('opponent', button);
+  }
+
   socket.onmessage = ({ data }) => {
     const msg = JSON.parse(data);
     const gamesEl = document.getElementById('games')
@@ -157,7 +202,7 @@ socket.onclose = () => {
               online_game = game;
               break;
             }
-  
+
             if (game.hostPeerId === peer_id && game.opponentPeerId) {
               if (isHost && online_game) {
                 break;
@@ -166,7 +211,7 @@ socket.onclose = () => {
               online_game = game;
               break;
             }
-  
+
             if (game.hostPeerId === peer_id) {
               const button = document.createElement('button');
               button.textContent = `Waiting for opponent ${gameNumber}`;
@@ -174,7 +219,7 @@ socket.onclose = () => {
               gameNumber++;
               continue;
             }
-  
+
             const button = document.createElement('button');
             button.textContent = `Join game ${gameNumber}`;
             button.onclick = async () => {
@@ -194,21 +239,26 @@ socket.onclose = () => {
             gameNumber++;
           }
         }
-        break; }
+        break;
+      }
       case 'game_updated': {
         console.log('Game updated');
         online_game.data = msg.data;
         drawLevel(level, online_game.data.summons, online_game.data.playerMana, online_game.data.opponentMana);
-        break; }
+        break;
+      }
       case 'game_deleted': {
         online_game = null;
-        break; }
+        break;
+      }
       case 'spawn': {
         opponentSpawningSummon = msg.data.summon;
-        break; }
+        break;
+      }
       default: {
         console.log('Unknown message', msg);
-        break; }
+        break;
+      }
     }
   };
 
@@ -241,7 +291,7 @@ socket.onclose = () => {
         gamePaused = false;
         gameOver = false;
         if (online_game) {
-          if (confirm('Do you want to leave the game?')) {  
+          if (confirm('Do you want to leave the game?')) {
             if (isHost) {
               socket.send(JSON.stringify({ type: 'delete_game', data: online_game }));
               isHost = false;
@@ -323,7 +373,7 @@ socket.onclose = () => {
     }
   });
 
-  
+
   let interval = null;
   function resetInterval() {
     clearInterval(interval);
@@ -332,8 +382,8 @@ socket.onclose = () => {
       if (online_game) {
         if (online_game.hostPeerId === peer_id) {
           socket.send(JSON.stringify({ type: 'update_game', data: { ...online_game, data: { summons, playerMana, opponentMana } } }));
-        } 
-        if (online_game.opponentPeerId === peer_id){
+        }
+        if (online_game.opponentPeerId === peer_id) {
           summons = online_game.data?.summons ? online_game.data.summons : [];
           playerMana = online_game.data?.playerMana >= 0 ? online_game.data.playerMana : SUMMONER_MAX_MANA;
           opponentMana = online_game.data?.playerMana >= 0 ? online_game.data.opponentMana : SUMMONER_MAX_MANA;
@@ -445,6 +495,10 @@ socket.onclose = () => {
   resetInterval();
 })();
 
+function px(value) {
+  return `${value}px`;
+}
+
 async function getPeerId() {
   return await fetch('http://localhost:3000/peerjs/myapp/peerjs/id').then(res => res.body.getReader().read()).then(({ value, done }) => {
     return new TextDecoder().decode(value);
@@ -488,6 +542,9 @@ function createLevel(gameEl) {
     return new Array(LEVEL_WIDTH).fill(null).map(() => {
       const cell = document.createElement('span');
       cell.classList.add('cell');
+      cell.style.width = px(GAME_SCREEN_WIDTH / LEVEL_WIDTH);
+      cell.style.height = px(GAME_SCREEN_HEIGHT / LEVEL_HEIGHT);
+      cell.style.fontSize = px(GAME_SCREEN_HEIGHT / LEVEL_HEIGHT);
       cell.textContent = CELL_MAP.EMPTY;
       gameEl.appendChild(cell);
       return cell;

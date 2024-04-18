@@ -11,12 +11,11 @@ br {
 
 #game {
   width: fit-content;
+  margin: 0 auto;
 }
 
 .cell {
   display: inline-block;
-  width: 18px;
-  height: 25px;
   font-size: 25px;
   font-family: 'Courier New', Courier, monospace;
   font-weight: bold;
@@ -54,9 +53,8 @@ br {
 
 .summon-button {
   display: inline-block;
-  width: 100px;
-  height: 100px;
-  font-size: 40px;
+  aspect-ratio: 1/1;
+  /* font-size: 40px; */
   font-family: 'Courier New', Courier, monospace;
   font-weight: bold;
   color: white;
@@ -128,7 +126,17 @@ br {
   flex-direction: column;
 }
 
-@media screen and (max-width: 740px){
+#warning-message {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 30px;
+}
+
+@media screen and (max-width: 425px){
   #game {
     display: none;
   }
@@ -138,11 +146,14 @@ br {
   #warning-message {
     display: block;
   }
+}
+
+@media screen and (min-width: 425px) and (max-width: 868px) and (orientation: landscape) {
   .mobile {
     display: block;
   }
-}
 
-@media screen and (max-width: 1380px) and (orientation: landscape) {
-  
+  .vertical {
+    display: flex;
+  }
 }
