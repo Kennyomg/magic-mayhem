@@ -76,6 +76,13 @@ const SUMMONS_MAP = {
     mana_cost: 3,
   }
 };
+
+const summonsEl = document.getElementById('summons');
+summonsEl.innerHTML = 'type, manacost, health, attack, speed<br/>';
+summonsEl.innerHTML += Object.values(SUMMONS_MAP).map(summon => {
+  return `${summon.type}, ${summon.mana_cost}, ${summon.health}, ${summon.attack}, ${summon.speed}`;
+}).join('<br/>');
+
 let socket;
 if (window.location.hostname.includes('localhost')) {
   socket = new WebSocket(`ws://${window.location.hostname}:3000/ws`);
@@ -117,6 +124,22 @@ socket.onclose = () => {
   let opponentSpawningSummon = '';
   let playerMana = SUMMONER_MAX_MANA;
   let opponentMana = SUMMONER_MAX_MANA;
+
+  playerButtons = document.getElementById('player-buttons');
+  playerButtons.childNodes.forEach(button => {
+    button.onclick = () => {
+      if (gamePaused || playerSpawningSummon) return;
+      playerSpawningSummon = button.dataset.summon;
+    };
+  });
+
+  opponentButtons = document.getElementById('opponent-buttons');
+  opponentButtons.childNodes.forEach(button => {
+    button.onclick = () => {
+      if (gamePaused || opponentSpawningSummon) return;
+      opponentSpawningSummon = button.dataset.summon;
+    };
+  });
   
   socket.onmessage = ({ data }) => {
     const msg = JSON.parse(data);
