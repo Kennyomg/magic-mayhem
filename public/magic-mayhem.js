@@ -217,6 +217,16 @@ socket.onclose = () => {
     configureButton('opponent', button);
   }
 
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > gameEl.offsetTop + gameEl.clientHeight - gameEl.clientHeight / 4 * 3) {
+      playerButtons.style.display = 'none';
+      opponentButtons.style.display = 'none';
+    } else {
+      playerButtons.style.display = 'flex';
+      opponentButtons.style.display = 'flex';
+    }
+  });
+
   socket.onmessage = ({ data }) => {
     const msg = JSON.parse(data);
     const gamesEl = document.getElementById('games')
