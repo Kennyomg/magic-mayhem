@@ -184,7 +184,12 @@ socket.onclose = () => {
   let playerMana = SUMMONER_MAX_MANA;
   let opponentMana = SUMMONER_MAX_MANA;
   
-  function restartGame() {
+  function restartGame(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+    }
     gameEl.innerHTML = '';
     gameOverEl.classList.add('hidden');
     drawCounter = 0;
@@ -210,7 +215,12 @@ socket.onclose = () => {
       }
     }
   }
-  function togglePause() {
+  function togglePause(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+    }
     gamePaused = !gamePaused;
     document.getElementById('pause').classList.toggle('hidden');
   }
@@ -219,13 +229,7 @@ socket.onclose = () => {
     function handleSummon(event) {
       event.preventDefault();
       event.stopPropagation();
-      // const touches = event.touches || [];
-      
-      // touches.forEach(touch => {
-      //   const { clientX, clientY } = touch;
-      //   const { left, top, width, height } = button.getBoundingClientRect();
-      //   if (clientX < left || clientX > left + width || clientY < top || clientY > top + height) return;
-      // });
+      event.stopImmediatePropagation();
 
       if (gamePaused || gameOver || isSpectator || (online_game && !isHost)) return;
       if (!playerSpawningSummon && who === 'player') {
@@ -246,6 +250,7 @@ socket.onclose = () => {
     if (touchMoved) return touchMoved = false;
     event.preventDefault();
     event.stopPropagation();
+    event.stopImmediatePropagation();
     
     if (gameOver) {
       restartGame();
@@ -254,9 +259,17 @@ socket.onclose = () => {
     togglePause();
   }
   gameEl.addEventListener('click', handleGameTap);
-  gameEl.addEventListener('touchstart', () => touchMoved = false);
-  gameEl.addEventListener('touchmove', () => touchMoved = true);
+  gameEl.addEventListener('touchstart', () => touchMoved = false, { passive: true });
+  gameEl.addEventListener('touchmove', () => touchMoved = true, { passive: true });
   gameEl.addEventListener('touchend', handleGameTap);
+  pauseEl.addEventListener('click', togglePause);
+  pauseEl.addEventListener('touchstart', () => touchMoved = false, { passive: true });
+  pauseEl.addEventListener('touchmove', () => touchMoved = true, { passive: true });
+  pauseEl.addEventListener('touchend', togglePause);
+  gameOverEl.addEventListener('click', restartGame);
+  gameOverEl.addEventListener('touchstart', () => touchMoved = false, { passive: true });
+  gameOverEl.addEventListener('touchmove', () => touchMoved = true, { passive: true });
+  gameOverEl.addEventListener('touchend', restartGame);
 
   playerButtons = document.getElementById('player-buttons');
   playerButtons.width = BUTTON_AREA_WIDTH;
