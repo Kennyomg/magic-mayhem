@@ -262,14 +262,14 @@ socket.onclose = () => {
   gameEl.addEventListener('touchstart', () => touchMoved = false, { passive: true });
   gameEl.addEventListener('touchmove', () => touchMoved = true, { passive: true });
   gameEl.addEventListener('touchend', handleGameTap);
-  pauseEl.addEventListener('click', togglePause);
+  pauseEl.addEventListener('click', handleGameTap);
   pauseEl.addEventListener('touchstart', () => touchMoved = false, { passive: true });
   pauseEl.addEventListener('touchmove', () => touchMoved = true, { passive: true });
-  pauseEl.addEventListener('touchend', togglePause);
-  gameOverEl.addEventListener('click', restartGame);
+  pauseEl.addEventListener('touchend', handleGameTap);
+  gameOverEl.addEventListener('click', handleGameTap);
   gameOverEl.addEventListener('touchstart', () => touchMoved = false, { passive: true });
   gameOverEl.addEventListener('touchmove', () => touchMoved = true, { passive: true });
-  gameOverEl.addEventListener('touchend', restartGame);
+  gameOverEl.addEventListener('touchend', handleGameTap);
 
   playerButtons = document.getElementById('player-buttons');
   playerButtons.width = BUTTON_AREA_WIDTH;
