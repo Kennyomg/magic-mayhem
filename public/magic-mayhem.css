@@ -77,8 +77,8 @@ br {
   line-height: 1;
 }
 
-
 #player-buttons, #opponent-buttons {
+  touch-action: none;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -96,7 +96,7 @@ br {
 } 
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .reversed {
@@ -171,5 +171,11 @@ br {
 
   .vertical {
     display: flex;
+  }
+}
+
+@media screen and (min-width: 868px) {
+  .mobile {
+    display: none;
   }
 }

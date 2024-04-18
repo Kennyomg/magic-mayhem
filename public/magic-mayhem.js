@@ -17,6 +17,8 @@ let screenOrientationType = screen?.orientation?.type || "landscape-primary";
 let screenOrientationAngle = screen?.orientation?.angle || 0;
 
 const gameEl = document.getElementById('game');
+const pauseEl = document.getElementById('pause');
+const gameOverEl = document.getElementById('game-over');
 
 function setGameDimensions() {
   WINDOW_AVAILABLE_HEIGHT = (supportsOrientationChange ? screen.height : window.innerHeight) - gameEl.offsetTop;
@@ -33,6 +35,8 @@ function setGameDimensions() {
 
   gameEl.style.width = px(GAME_SCREEN_WIDTH);
   gameEl.style.height = px(GAME_SCREEN_HEIGHT);
+  pauseEl.style.top = px(GAME_SCREEN_HEIGHT / 2 + gameEl.offsetTop);
+  gameOverEl.style.top = px(GAME_SCREEN_HEIGHT / 2 + gameEl.offsetTop);
 
   if (gameEl.children.length) {
     for (const cell of gameEl.getElementsByClassName('cell')) {
@@ -179,10 +183,42 @@ socket.onclose = () => {
   let opponentSpawningSummon = '';
   let playerMana = SUMMONER_MAX_MANA;
   let opponentMana = SUMMONER_MAX_MANA;
+  
+  function restartGame() {
+    gameEl.innerHTML = '';
+    gameOverEl.classList.add('hidden');
+    drawCounter = 0;
+    didAnythingMove = false;
+    summons = [];
+    playerMana = SUMMONER_MAX_MANA;
+    opponentMana = SUMMONER_MAX_MANA;
+    playerSpawningSummon = '';
+    opponentSpawningSummon = '';
+    level = createLevel(gameEl);
+    drawLevel(level, summons);
+    gamePaused = false;
+    gameOver = false;
+    if (online_game) {
+      if (confirm('Do you want to leave the game?')) {
+        if (isHost) {
+          socket.send(JSON.stringify({ type: 'delete_game', data: online_game }));
+          isHost = false;
+        } else {
+        socket.send(JSON.stringify({ type: 'leave_game', data: online_game }));
+        }
+        online_game = null;
+      }
+    }
+  }
+  function togglePause() {
+    gamePaused = !gamePaused;
+    document.getElementById('pause').classList.toggle('hidden');
+  }
 
   function configureButton(who, button) {
     function handleSummon(event) {
-      // event.preventDefault();
+      event.preventDefault();
+      event.stopPropagation();
       // const touches = event.touches || [];
       
       // touches.forEach(touch => {
@@ -205,6 +241,23 @@ socket.onclose = () => {
     button.addEventListener('touchend', handleSummon);
   }
 
+  let touchMoved = false;
+  function handleGameTap(event) {
+    if (touchMoved) return touchMoved = false;
+    event.preventDefault();
+    event.stopPropagation();
+    
+    if (gameOver) {
+      restartGame();
+      return;
+    }
+    togglePause();
+  }
+  gameEl.addEventListener('click', handleGameTap);
+  gameEl.addEventListener('touchstart', () => touchMoved = false);
+  gameEl.addEventListener('touchmove', () => touchMoved = true);
+  gameEl.addEventListener('touchend', handleGameTap);
+
   playerButtons = document.getElementById('player-buttons');
   playerButtons.width = BUTTON_AREA_WIDTH;
   for (const button of playerButtons.getElementsByClassName('summon-button')) {
@@ -219,11 +272,11 @@ socket.onclose = () => {
 
   window.addEventListener('scroll', () => {
     if (window.scrollY > gameEl.offsetTop + gameEl.clientHeight - gameEl.clientHeight / 4 * 3) {
-      playerButtons.style.display = 'none';
-      opponentButtons.style.display = 'none';
+      playerButtons.classList.add('hidden');
+      opponentButtons.classList.add('hidden');
     } else {
-      playerButtons.style.display = 'flex';
-      opponentButtons.style.display = 'flex';
+      playerButtons.classList.remove('hidden');
+      opponentButtons.classList.remove('hidden');
     }
   });
 
@@ -313,35 +366,11 @@ socket.onclose = () => {
       case ' ':
         e.preventDefault();
         if (gameOver) break;
-        gamePaused = !gamePaused;
-        document.getElementById('pause').classList.toggle('hidden');
+        togglePause();
         break;
       case 'r':
       case 'R':
-        gameEl.innerHTML = '';
-        gameOverEl.classList.add('hidden');
-        drawCounter = 0;
-        didAnythingMove = false;
-        summons = [];
-        playerMana = SUMMONER_MAX_MANA;
-        opponentMana = SUMMONER_MAX_MANA;
-        playerSpawningSummon = '';
-        opponentSpawningSummon = '';
-        level = createLevel(gameEl);
-        drawLevel(level, summons);
-        gamePaused = false;
-        gameOver = false;
-        if (online_game) {
-          if (confirm('Do you want to leave the game?')) {
-            if (isHost) {
-              socket.send(JSON.stringify({ type: 'delete_game', data: online_game }));
-              isHost = false;
-            } else {
-              socket.send(JSON.stringify({ type: 'leave_game', data: online_game }));
-            }
-            online_game = null;
-          }
-        }
+        restartGame();
         break;
       case 'z':
         if (gamePaused) break;
@@ -509,7 +538,7 @@ socket.onclose = () => {
       if (drawCounter > 10 && !(playerMana || opponentMana)) {
         gamePaused = true;
         gameOver = true;
-        gameOverEl.innerHTML = 'Draw!!\r\nPress R to restart the game.';
+        gameOverEl.innerHTML = 'Draw!!\r\nPress R or Tap to restart the game.';
         gameOverEl.classList.remove('hidden');
         drawLevel(level, summons, playerMana, opponentMana);
       }
@@ -519,7 +548,7 @@ socket.onclose = () => {
       if (!summons.some(summon => summon.team === 'player') && !playerMana) {
         gamePaused = true;
         gameOver = true;
-        gameOverEl.innerHTML = `<span style="color:${OPPONENT_COLOR};">${OPPONENT_COLOR.toUpperCase()}</span> Won!!\r\nPress R to restart the game.`;
+        gameOverEl.innerHTML = `<span style="color:${OPPONENT_COLOR};">${OPPONENT_COLOR.toUpperCase()}</span> Won!!\r\nPress R or Tap to restart the game.`;
         gameOverEl.classList.remove('hidden');
         drawLevel(level, summons, playerMana, opponentMana);
       }
@@ -527,7 +556,7 @@ socket.onclose = () => {
       if (!summons.some(summon => summon.team === 'opponent') && !opponentMana) {
         gamePaused = true;
         gameOver = true;
-        gameOverEl.innerHTML = `<span style="color:${PLAYER_COLOR};">${PLAYER_COLOR.toUpperCase()}</span> Won!!\r\nPress R to restart the game.`;
+        gameOverEl.innerHTML = `<span style="color:${PLAYER_COLOR};">${PLAYER_COLOR.toUpperCase()}</span> Won!!\r\nPress R or Tap to restart the game.`;
         gameOverEl.classList.remove('hidden');
         drawLevel(level, summons, playerMana, opponentMana);
       }
