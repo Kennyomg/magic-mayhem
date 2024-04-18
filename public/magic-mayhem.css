@@ -48,6 +48,7 @@ br {
   transform: translate(-50%, -50%);
   color: white;
   font-size: 30px;
+  user-select: none;
 }
 
 #game-over {
@@ -59,6 +60,7 @@ br {
   color: white;
   font-size: 30px;
   white-space: pre;
+  user-select: none;
 }
 
 .summon-button {
