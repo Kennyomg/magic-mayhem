@@ -132,6 +132,7 @@ app.ws("/ws", (ws: WebSocket, req) => {
 const wss: WebSocketServer = exWs.getWss();
 wss.on("connection", (ws: WebSocket) => {
     ws.send(JSON.stringify({ type: "broadcast", data: games }));
+    console.log("Client connected", wss.clients.size);
     // console.log("Client connected");
     // console.log(wss.clients.size);
 });
