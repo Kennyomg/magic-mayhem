@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magic Mayhem</title>
+  <script type="module" src="./magic-mayhem.js" defer></script>
+  <script src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" defer></script>
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <link rel="stylesheet" href="./magic-mayhem.css">
+</head>
+
+<body style="background-color: black; color: white;">
+  <google-cast-launcher></google-cast-launcher>
+  <script>
+    window['__onGCastApiAvailable'] = (isAvailable) => {
+      if (isAvailable) {
+        cast.framework.CastContext.getInstance().setOptions({
+          receiverApplicationId: '77C051C3',
+          autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+        });
+        
+        const castButton = document.querySelector('google-cast-launcher');
+        castButton.addEventListener('cast-connect', () => {
+          console.log('Connected to Cast');
+        });
+        castButton.addEventListener('cast-disconnect', () => {
+          console.log('Disconnected from Cast');
+        });
+    
+        const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+        if (castSession) {
+          console.log('Connected to Cast');
+        }
+      }
+    };
+
+  </script>
+  <div class="mobile-landscape">
+    <div style="position: relative; width: fit-content;">
+      <h1 class="show-on-root" style="text-align: center;">Magic Mayhem</h1>
+      <!-- Playing field -->
+      <div id="game"></div>
+      <div id="pause" class="hidden">Game Paused</div>
+      <div id="game-over" class="hidden"></div>
+      <div class="show-on-root" style="font-size: large;">
+        <br>
+        <!-- List of online games -->
+        <div id="games"></div>
+        <br>
+        Game speed: <span id="game-speed">not set</span> <br><br>
+        Summons: <br> <span id="summons">not set</span> <br><br>
+        Controls: <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;Spacebar - pause <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;"z x c" - summon blue L M & H <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;"/ . ," - summon red L M & H <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;"r" - restart <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;"j" - create online game <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;"+" - speed up <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;"-" - slow down <br>
+      </div>
+      <br class="show-on-root">
+      <div style="font-size: larger;" class="show-on-root">
+        <p style="max-width: 700px; padding: 0; margin: 0;">
+          At the Ministry of Magic, deep inside the Magic Vault, works Harold. Harold is a Magic Scribe apprentice and
+          intern in the Magic Archives. He's tasked with transcribing every single duel between summoners throughout
+          history. The deadline is 48 hours. With paper and pencil Harold presents: the epic battles of Magic Mayhem!
+        </p>
+      </div>
+    </div>
+    <div id="player-buttons" class="mobile middle left vertical">
+      <button data-summon="HEAVY" class="summon-button">H</button>
+      <button data-summon="MEDIUM" class="summon-button">M</button>
+      <button data-summon="LIGHT" class="summon-button">L</button>
+    </div>
+    <div id="opponent-buttons" class="mobile middle right vertical">
+      <button data-summon="HEAVY" class="summon-button">H</button>
+      <button data-summon="MEDIUM" class="summon-button">M</button>
+      <button data-summon="LIGHT" class="summon-button">L</button>
+    </div>
+  </div>
+  <div id="warning-message" class="mobile center top">
+    <h1>Warning!</h1>
+    <p>This game is best played in landscape.</p>
+    <p>Please turn your phone.</p>
+    <p>Thank you!</p>
+  </div>
+
+  <script defer>
+    if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+      document.querySelectorAll('.show-on-root').forEach(el => el.style.display = 'block');
+    } else {
+      document.body.style.overflowY = 'hidden';
+    }
+  </script>
+</body>
+
+</html>
