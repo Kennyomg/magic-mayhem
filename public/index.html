@@ -10,11 +10,11 @@
   <script type="module" crossorigin>var Ie=Object.defineProperty;var me=(n,i,r)=>i in n?Ie(n,i,{enumerable:!0,configurable:!0,writable:!0,value:r}):n[i]=r;var le=(n,i,r)=>(me(n,typeof i!="symbol"?i+"":i,r),r);(function(){const n=document.createElement("link").relList;if(n&&n.supports&&n.supports("modulepreload"))return;for(const t of document.querySelectorAll('link[rel="modulepreload"]'))r(t);new MutationObserver(t=>{for(const a of t)if(a.type==="childList")for(const s of a.addedNodes)s.tagName==="LINK"&&s.rel==="modulepreload"&&r(s)}).observe(document,{childList:!0,subtree:!0});function i(t){const a={};return t.integrity&&(a.integrity=t.integrity),t.referrerPolicy&&(a.referrerPolicy=t.referrerPolicy),t.crossOrigin==="use-credentials"?a.credentials="include":t.crossOrigin==="anonymous"?a.credentials="omit":a.credentials="same-origin",a}function r(t){if(t.ep)return;t.ep=!0;const a=i(t);fetch(t.href,a)}})();const b=40,R=20;let ce,ie,M,C,j="onorientationchange"in window&&"screen"in window,ve=j?"orientationchange":"resize";var ue;let de=((ue=screen==null?void 0:screen.orientation)==null?void 0:ue.type)||"landscape-primary";var Ee;(Ee=screen==null?void 0:screen.orientation)!=null&&Ee.angle;const w=document.getElementById("game"),U=document.getElementById("pause"),Te=document.getElementById("game-over");function se(){if(ce=(j?screen.height:window.innerHeight)-w.offsetTop,M=ce-50,C=25/18*M,ie=Math.max(75,Math.min(100,(j?screen.width:window.innerWidth)-C-20)),C>window.innerWidth&&(C=window.innerWidth-20,M=18/25*C),w.style.width=A(C),w.style.height=A(M),U.style.top=A(M/2+w.offsetTop),Te.style.top=A(M/2+w.offsetTop),w.children.length)for(const n of w.getElementsByClassName("cell"))n.style.width=A(C/b),n.style.height=A(M/R),n.style.fontSize=A(M/R)}se();window.addEventListener(ve,function(){j&&de!==screen.orientation.type&&(de=screen.orientation.type,screen.orientation.angle),se()},!1);j&&window.addEventListener("resize",()=>se(),!1);let N=3,T="",ne,l,_=!1,be=!1;const ee=class ee{constructor(i,r=0){this.text=i,this.ignoreFrontWidth=r}static async fromFile(i,r=0){try{return new this(ee.INLINE_SPRITES[i]||await fetch(i).then(t=>t.text()),r)}catch(t){throw console.error(t),new Error("Cannot load sprite from file")}}get lines(){return this.text.split(`
 `).filter(Boolean)}get width(){return Math.max(...this.lines.map(i=>i.length))}get collisionWidth(){return this.width-this.ignoreFrontWidth}get height(){return this.lines.length}getCharAt(i,r,t){return i<0||i>this.width||r<0||r>this.height?(console.error(`Cannot get sprite char at x: ${i} and y: ${r}`),!1):t?this.lines[r][this.width-1-i]:this.lines[r][i]}};le(ee,"INLINE_SPRITES",{"./light.txt":";=,^<","./medium.txt":`()
 ||/
-/\\`,"./heavy.txt":`     /_
-<()>/_
- /\\/
+/\\`,"./heavy.txt":`      /_
+<()> /_
+/  \\/
  ||
- /\\`,"./wizard.txt":`  x
+/  \\`,"./wizard.txt":`  x
  / \\ * *
  | | /*
  / \\/
