@@ -411,8 +411,8 @@ socket.onclose = () => {
               const id = peer_id ? peer_id : await getPeerId();
               if (!peer) {
                 peer = new Peer(id, {
-                  host: 'localhost',
-                  port: 3000,
+                  host: window.location.hostname,
+                  port: window.location.port,
                   path: '/peerjs/myapp',
                 });
               }
