@@ -6,11 +6,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Magic Mayhem</title>
   <script src="./magic-mayhem.js" defer></script>
+  <script src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" defer></script>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <link rel="stylesheet" href="./magic-mayhem.css">
 </head>
 
 <body style="background-color: black; color: white;">
+  <google-cast-launcher></google-cast-launcher>
+  <script>
+    window['__onGCastApiAvailable'] = (isAvailable) => {
+      if (isAvailable) {
+        cast.framework.CastContext.getInstance().setOptions({
+          receiverApplicationId: '77C051C3',
+          autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+        });
+        
+        const castButton = document.querySelector('google-cast-launcher');
+        castButton.addEventListener('cast-connect', () => {
+          console.log('Connected to Cast');
+        });
+        castButton.addEventListener('cast-disconnect', () => {
+          console.log('Disconnected from Cast');
+        });
+    
+        const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+        if (castSession) {
+          console.log('Connected to Cast');
+        }
+      }
+    };
+
+  </script>
   <div class="mobile-landscape">
     <div style="position: relative; width: fit-content;">
       <h1 class="show-on-root" style="text-align: center;">Magic Mayhem</h1>

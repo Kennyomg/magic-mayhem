@@ -26,7 +26,6 @@ function setGameDimensions() {
   GAME_SCREEN_WIDTH = 25 / 18 * GAME_SCREEN_HEIGHT;
   
   BUTTON_AREA_WIDTH = Math.max(75, Math.min(100, (supportsOrientationChange ? screen.width : window.innerWidth) - GAME_SCREEN_WIDTH - 20));
-  console.log({BUTTON_AREA_WIDTH})
 
   if (GAME_SCREEN_WIDTH > window.innerWidth) {
     GAME_SCREEN_WIDTH = window.innerWidth - 20;
@@ -67,22 +66,78 @@ let online_game;
 let isHost = false;
 let isSpectator = false;
 
+// const SUMMONER_TXT = `
+//  x
+// / \\ * *
+// | | /*
+// / \\/
+// | |
+// `;
+// const SUMMONER_SPRITE = {
+//   text: '',
+//   get lines() { return this.text.split('\n').filter(Boolean); },
+//   get width() {
+//     return Math.max(...this.lines.map(line => line.length)); 
+//   },
+//   get height() { return this.lines.length; },
+//   getCharAt(x, y, flipped) {
+//     if (x < 0 || x > this.width || y < 0 || y > this.height) {
+//       console.error(`Cannot get sprite char at x: ${x} and y: ${y}`);
+//       return false;
+//     }
+//     if (flipped) {
+//       return this.lines[y][this.width - 1 - x];
+//     }
+//     return this.lines[y][x];
+//   }
+// }
+
+class Sprite {
+  constructor(text, ignoreFrontWidth = 0) {
+    this.text = text;
+    this.ignoreFrontWidth = ignoreFrontWidth;
+  }
+  static async fromFile(filePath, ignoreFrontWidth = 0) {
+    try {
+      return new this(await fetch(filePath).then(res => res.text()), ignoreFrontWidth);
+    } catch (err) {
+      console.error(err);
+      throw new Error('Cannot load sprite from file');
+    }
+  }
+  get lines() { return this.text.split('\n').filter(Boolean); }
+  get width() { return Math.max(...this.lines.map(line => line.length)); }
+  get collisionWidth() { return this.width - this.ignoreFrontWidth; }
+  get height() { return this.lines.length; }
+  getCharAt(x, y, flipped) {
+    if (x < 0 || x > this.width || y < 0 || y > this.height) {
+      console.error(`Cannot get sprite char at x: ${x} and y: ${y}`);
+      return false;
+    }
+    if (flipped) {
+      return this.lines[y][this.width - 1 - x];
+    }
+    return this.lines[y][x];
+  }
+}
+
+/** @type {Sprite} */
+let SUMMONER_SPRITE;
+
 const PLATEAU_WIDTH = 10;
-const PLATEAU_Y = 5;
-const SUMMONER_HEIGHT = 3;
-const SUMMONER_WIDTH = 2;
+const PLATEAU_Y = 8;
 const SUMMONER_MAX_MANA = 10;
 const PLAYER_COLOR = 'blue';
 const PLAYER_X = 4;
 const PLAYER_Y = PLATEAU_Y - 1;
 const OPPONENT_COLOR = 'red';
-const OPPONENT_X = LEVEL_WIDTH - 1 - PLAYER_X - 1;
+let OPPONENT_X;
 const OPPONENT_Y = PLATEAU_Y - 1;
 
 const GROUND_Y = LEVEL_HEIGHT - 1;
 const PLAYER_PORTAL_X = PLAYER_X;
 const PLAYER_PORTAL_Y = GROUND_Y - 1;
-const OPPONENT_PORTAL_X = OPPONENT_X + SUMMONER_WIDTH - 1;
+let OPPONENT_PORTAL_X;
 const OPPONENT_PORTAL_Y = GROUND_Y - 1;
 
 const CELL_MAP = {
@@ -98,12 +153,10 @@ const SUMMONS_MAP = {
     type: 'LIGHT',
     x: 1,
     y: GROUND_Y - 1,
-    height: 1,
-    width: 2,
+    sprite: undefined,
     speed: 2,
     health: 2,
     attack: 1,
-    char: 'L',
     team: '',
     mana_cost: 1,
   },
@@ -111,12 +164,10 @@ const SUMMONS_MAP = {
     type: 'MEDIUM',
     x: 1,
     y: GROUND_Y - 1,
-    height: 3,
-    width: 1,
+    sprite: undefined,
     speed: 1,
     health: 3,
     attack: 2,
-    char: 'M',
     team: '',
     mana_cost: 2,
   },
@@ -124,12 +175,10 @@ const SUMMONS_MAP = {
     type: 'HEAVY',
     x: 1,
     y: GROUND_Y - 1,
-    height: 3,
-    width: 2,
+    sprite: undefined,
     speed: 1,
     health: 5,
     attack: 1,
-    char: 'H',
     team: '',
     mana_cost: 3,
   }
@@ -166,7 +215,7 @@ socket.onclose = () => {
 };
 
 
-(() => {
+(async () => {
   console.log('magic-mayhem.js loaded');
 
   const gameSpeedEl = document.getElementById('game-speed');
@@ -183,6 +232,20 @@ socket.onclose = () => {
   let opponentSpawningSummon = '';
   let playerMana = SUMMONER_MAX_MANA;
   let opponentMana = SUMMONER_MAX_MANA;
+
+  try {
+    SUMMONER_SPRITE = await Sprite.fromFile('./wizard.txt');
+    OPPONENT_X = LEVEL_WIDTH - PLAYER_X - SUMMONER_SPRITE.width;
+    OPPONENT_PORTAL_X = OPPONENT_X + SUMMONER_SPRITE.width - 1;
+
+    SUMMONS_MAP.LIGHT.sprite = await Sprite.fromFile('./light.txt');
+    SUMMONS_MAP.MEDIUM.sprite = await Sprite.fromFile('./medium.txt');
+    SUMMONS_MAP.HEAVY.sprite = await Sprite.fromFile('./heavy.txt', 3);
+
+    console.log(SUMMONS_MAP);
+  } catch (err) {
+    console.error(err)
+  }
   
   function restartGame(event) {
     if (event) {
@@ -258,6 +321,7 @@ socket.onclose = () => {
     }
     togglePause();
   }
+
   gameEl.addEventListener('click', handleGameTap);
   gameEl.addEventListener('touchstart', () => touchMoved = false, { passive: true });
   gameEl.addEventListener('touchmove', () => touchMoved = true, { passive: true });
@@ -284,13 +348,9 @@ socket.onclose = () => {
   }
 
   window.addEventListener('scroll', () => {
-    if (window.scrollY > gameEl.offsetTop + gameEl.clientHeight - gameEl.clientHeight / 4 * 3) {
-      playerButtons.classList.add('hidden');
-      opponentButtons.classList.add('hidden');
-    } else {
-      playerButtons.classList.remove('hidden');
-      opponentButtons.classList.remove('hidden');
-    }
+    const isGameInView = window.scrollY > gameEl.offsetTop + gameEl.clientHeight - gameEl.clientHeight / 4 * 3;
+    playerButtons.classList.toggle('hidden', isGameInView);
+    opponentButtons.classList.toggle('hidden', isGameInView);
   });
 
   socket.onmessage = ({ data }) => {
@@ -480,14 +540,20 @@ socket.onclose = () => {
       if (gamePaused) return;
 
       if (!online_game || isHost) {
-        if (playerSpawningSummon) {
+        if (
+          playerSpawningSummon && 
+          !summons.some(summon => summon.team === 'player' && isRectangleInRectangle(PLAYER_PORTAL_X, PLAYER_PORTAL_Y, SUMMONS_MAP[playerSpawningSummon]?.sprite?.collisionWidth, 1, summon.x, summon.y, summon.sprite.width, summon.sprite.height))
+        ) {
           if (playerMana >= SUMMONS_MAP[playerSpawningSummon].mana_cost && playerMana >= playerMana - SUMMONS_MAP[playerSpawningSummon].mana_cost) {
             playerMana -= SUMMONS_MAP[playerSpawningSummon].mana_cost;
             summons.push(createSummon('player', playerSpawningSummon));
           }
           playerSpawningSummon = '';
         }
-        if (opponentSpawningSummon) {
+        if (
+          opponentSpawningSummon &&
+          !summons.some(summon => summon.team === 'opponent' && isRectangleInRectangle(OPPONENT_PORTAL_X - SUMMONS_MAP[opponentSpawningSummon]?.sprite?.collisionWidth, OPPONENT_PORTAL_Y, OPPONENT_PORTAL_X, 1, summon.x, summon.y, summon.sprite.width, summon.sprite.height))
+        ) {
           if (opponentMana >= SUMMONS_MAP[opponentSpawningSummon].mana_cost && opponentMana >= opponentMana - SUMMONS_MAP[opponentSpawningSummon].mana_cost) {
             opponentMana -= SUMMONS_MAP[opponentSpawningSummon].mana_cost;
             summons.push(createSummon('opponent', opponentSpawningSummon));
@@ -502,18 +568,18 @@ socket.onclose = () => {
         const nextX = summon.x + summon.speed * summon.direction;
 
         if (!summons.some(otherSummon => otherSummon !== summon
-          && isRectangleInRectangle(nextX, summon.y, summon.width, summon.height, otherSummon.x, otherSummon.y, otherSummon.width, otherSummon.height))) {
-          if (nextX > 0 && nextX < LEVEL_WIDTH - summon.width) {
+          && isRectangleInRectangle(nextX, summon.y, summon.sprite.collisionWidth, summon.sprite.height, otherSummon.x, otherSummon.y, otherSummon.sprite.collisionWidth, otherSummon.sprite.height))) {
+          if (nextX > 0 && nextX < LEVEL_WIDTH - summon.sprite.collisionWidth) {
             summon.x = nextX;
           } else {
-            summon.x = nextX <= 0 ? 1 : LEVEL_WIDTH - summon.width - 1;
+            summon.x = nextX <= 0 ? 1 : LEVEL_WIDTH - summon.sprite.collisionWidth - 1;
             summon.direction *= -1;
           }
           didAnythingMove = true;
         } else {
-          const otherSummon = summons.find(otherSummon => otherSummon !== summon && isRectangleInRectangle(nextX, summon.y, summon.width, summon.height, otherSummon.x, otherSummon.y, otherSummon.width, otherSummon.height));
+          const otherSummon = summons.find(otherSummon => otherSummon !== summon && isRectangleInRectangle(nextX, summon.y, summon.sprite.collisionWidth, summon.sprite.height, (otherSummon.direction > 0 ? otherSummon.x : otherSummon.x + otherSummon.sprite.ignoreFrontWidth), otherSummon.y, otherSummon.sprite.collisionWidth, otherSummon.sprite.height));
           if (
-            (summon.type === 'LIGHT' &&
+            (summon && otherSummon && summon?.type && otherSummon?.type && summon.type === 'LIGHT' &&
               otherSummon.type === 'HEAVY' &&
               (summon.team === otherSummon.team ||
                 summon.direction !== otherSummon.direction))
@@ -528,6 +594,7 @@ socket.onclose = () => {
           }
 
           if (
+            summon && otherSummon &&
             summon.attack > 0 &&
             summon.team !== otherSummon.team &&
             summon.health > 0 &&
@@ -612,11 +679,11 @@ function createSummon(team, summon) {
 
   return {
     ...SUMMONS_MAP[summon],
-    x: team === 'player' ? PLAYER_PORTAL_X : OPPONENT_PORTAL_X,
+    x: team === 'player' ? PLAYER_PORTAL_X : OPPONENT_PORTAL_X - SUMMONS_MAP[summon].sprite.width + 1,
     direction: team === 'player' ? 1 : -1,
     color: team === 'player' ? PLAYER_COLOR : OPPONENT_COLOR,
     team
-  }
+  };
 }
 
 function createLevel(gameEl) {
@@ -647,18 +714,26 @@ function isRectangleInRectangle(x, y, width, height, targetX, targetY, targetWid
 }
 
 function drawLevel(level, summons, playerMana, opponentMana) {
+  summons.sort((a, b) => {
+    return a.type === b.type ? 0 :
+           a.type === 'HEAVY' && b.type !== 'HEAVY' ? -1 :
+           a.type === 'MEDIUM' && b.type === 'LIGHT' ? -1 :
+           a.type === 'LIGHT' && b.type !== 'LIGHT' ? 1 : 1
+  });
+
   for (let y = 0; y < LEVEL_HEIGHT; y++) {
     for (let x = 0; x < LEVEL_WIDTH; x++) {
       const cell = level[y][x];
       const isBorder = x === 0 || x === LEVEL_WIDTH - 1 || y === 0 || y === LEVEL_HEIGHT - 1;
       const isPlateau = (x > 0 && (x < PLATEAU_WIDTH || x > LEVEL_WIDTH - 1 - PLATEAU_WIDTH) && x < LEVEL_WIDTH - 1) && y === PLATEAU_Y;
-      const isPlayer = isPointInRectangle(x, y, PLAYER_X, PLAYER_Y, SUMMONER_WIDTH, SUMMONER_HEIGHT);
-      const isOpponent = isPointInRectangle(x, y, OPPONENT_X, OPPONENT_Y, SUMMONER_WIDTH, SUMMONER_HEIGHT);
+      const isPlayer = isPointInRectangle(x, y, PLAYER_X, PLAYER_Y, SUMMONER_SPRITE.width, SUMMONER_SPRITE.height);
+      const isOpponent = isPointInRectangle(x, y, OPPONENT_X, OPPONENT_Y, SUMMONER_SPRITE.width, SUMMONER_SPRITE.height);
       const isPlayerPortal = x === PLAYER_PORTAL_X && y === PLAYER_PORTAL_Y;
       const isOpponentPortal = x === OPPONENT_PORTAL_X && y === OPPONENT_PORTAL_Y;
       const isPlayerManaBar = playerMana && (x === 1 || x <= playerMana) && y === 1;
       const isOpponentManaBar = opponentMana && (x === LEVEL_WIDTH - 2 || x >= LEVEL_WIDTH - 1 - opponentMana) && y === 1;
-      const isSummon = summons.some(summon => isPointInRectangle(x, y, summon.x, summon.y, summon.width, summon.height));
+      const isSummon = summons.some(summon => isPointInRectangle(x, y, summon.x, summon.y, summon.sprite.width, summon.sprite.height));
+
 
       switch (true) {
         case (isBorder || isPlateau):
@@ -675,25 +750,34 @@ function drawLevel(level, summons, playerMana, opponentMana) {
           cell.textContent = '*';
           cell.style.color = OPPONENT_COLOR;
           break;
-        case (isPlayer || isOpponent):
-          if (cell.textContent !== CELL_MAP.PLAYER) {
-            cell.textContent = CELL_MAP.PLAYER;
-            cell.style.color = isPlayer ? PLAYER_COLOR : OPPONENT_COLOR;
-            if (isOpponent) {
-              cell.classList.add('reversed');
+        case (isPlayer || isOpponent):{
+          let char;
+          if (char = SUMMONER_SPRITE.getCharAt(
+            x - (isPlayer ? PLAYER_X : OPPONENT_X),
+            y - (isPlayer ? PLAYER_Y : OPPONENT_Y) + SUMMONER_SPRITE.height - 1, isOpponent)
+          ) {
+            if (cell.textContent !== char) {
+              cell.textContent = char;
+              cell.style.color = isPlayer ? PLAYER_COLOR : OPPONENT_COLOR;
+              if (isOpponent) {
+                cell.classList.add('reversed');
+              }
             }
           }
-          break;
-        case (isSummon):
-          const summon = summons.find(summon => isPointInRectangle(x, y, summon.x, summon.y, summon.width, summon.height));
-          if (summon.direction === -1) {
-            cell.classList.add('reversed');
-          } else {
-            cell.classList.remove('reversed');
-          }
-          cell.textContent = summon.char;
-          cell.style.color = summon.color;
-          break;
+          break;}
+        case (isSummon):{
+          const foundSummons = summons.filter(summon => isPointInRectangle(x, y, summon.x, summon.y, summon.sprite.width, summon.sprite.height));
+          // let drewOnEmpty = false;
+          foundSummons.forEach(summon => {
+            const isFacingLeft = summon.direction === -1;
+            const char = summon.sprite.getCharAt(x - summon.x, y - summon.y + summon.sprite.height - 1, isFacingLeft);
+            // if (!cell.textContent && char) {
+              cell.classList.toggle('reversed', isFacingLeft);
+              cell.textContent = char;
+              cell.style.color = summon.color;
+            // }
+          });
+          break;}
         case (isPlayerPortal || isOpponentPortal):
           if (cell.textContent !== CELL_MAP.PORTAL) {
             cell.textContent = CELL_MAP.PORTAL;
