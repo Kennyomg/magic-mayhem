@@ -210,8 +210,10 @@ summonsEl.innerHTML += Object.values(SUMMONS_MAP).map(summon => {
 }).join('<br/>');
 
 let socket;
-if (window.location.hostname.includes('localhost') || window.location.protocol === 'http:') {
+if (window.location.hostname.includes('localhost') {
   socket = new WebSocket(`ws://${window.location.host}/ws`);
+} else if (window.location.protocol === 'http:') {
+  socket = new WebSocket(`http://${window.location.host}/ws`);
 } else {
   socket = new WebSocket(`wss://${window.location.host}/ws`);
 }
