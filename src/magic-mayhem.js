@@ -667,7 +667,7 @@ function px(value) {
 }
 
 async function getPeerId() {
-  return await fetch('http://localhost:3000/peerjs/myapp/peerjs/id').then(res => res.body.getReader().read()).then(({ value, done }) => {
+  return await fetch(`${window.location.protocol}//${window.location.host}/peerjs/myapp/peerjs/id`).then(res => res.body.getReader().read()).then(({ value, done }) => {
     return new TextDecoder().decode(value);
   });
 }
@@ -675,8 +675,8 @@ async function getPeerId() {
 function createPeer() {
   if (peer) return peer;
   const newPeer = new Peer(peer_id, {
-    host: 'localhost',
-    port: 3000,
+    host: window.location.hostname,
+    port: window.location.port,
     path: '/peerjs/myapp',
   });
 
