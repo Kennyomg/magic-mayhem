@@ -92,14 +92,31 @@ let isSpectator = false;
 //   }
 // }
 
+
 class Sprite {
+  static INLINE_SPRITES = {
+    './light.txt': `;=,^<`,
+    './medium.txt': `()
+||/
+/${'\\'}`,
+    './heavy.txt': `     /_
+<()>/_
+ /\\/
+ ||
+ /\\`,
+    './wizard.txt': `  x
+ / \\ * *
+ | | /*
+ / \\/
+ | |`
+  };
   constructor(text, ignoreFrontWidth = 0) {
     this.text = text;
     this.ignoreFrontWidth = ignoreFrontWidth;
   }
   static async fromFile(filePath, ignoreFrontWidth = 0) {
     try {
-      return new this(await fetch(filePath).then(res => res.text()), ignoreFrontWidth);
+      return new this(Sprite.INLINE_SPRITES[filePath] || await fetch(filePath).then(res => res.text()), ignoreFrontWidth);
     } catch (err) {
       console.error(err);
       throw new Error('Cannot load sprite from file');
@@ -193,7 +210,7 @@ summonsEl.innerHTML += Object.values(SUMMONS_MAP).map(summon => {
 }).join('<br/>');
 
 let socket;
-if (window.location.hostname.includes('localhost')) {
+if (window.location.hostname.includes('localhost') || window.location.protocol === 'http:') {
   socket = new WebSocket(`ws://${window.location.hostname}:3000/ws`);
 } else {
   socket = new WebSocket(`wss://${window.location.hostname}/ws`);
@@ -335,13 +352,13 @@ socket.onclose = () => {
   gameOverEl.addEventListener('touchmove', () => touchMoved = true, { passive: true });
   gameOverEl.addEventListener('touchend', handleGameTap);
 
-  playerButtons = document.getElementById('player-buttons');
+  const playerButtons = document.getElementById('player-buttons');
   playerButtons.width = BUTTON_AREA_WIDTH;
   for (const button of playerButtons.getElementsByClassName('summon-button')) {
     configureButton('player', button);
   }
 
-  opponentButtons = document.getElementById('opponent-buttons');
+  const opponentButtons = document.getElementById('opponent-buttons');
   opponentButtons.width = BUTTON_AREA_WIDTH;
   for (const button of opponentButtons.getElementsByClassName('summon-button')) {
     configureButton('opponent', button);
@@ -579,14 +596,14 @@ socket.onclose = () => {
         } else {
           const otherSummon = summons.find(otherSummon => otherSummon !== summon && isRectangleInRectangle(nextX, summon.y, summon.sprite.collisionWidth, summon.sprite.height, (otherSummon.direction > 0 ? otherSummon.x : otherSummon.x + otherSummon.sprite.ignoreFrontWidth), otherSummon.y, otherSummon.sprite.collisionWidth, otherSummon.sprite.height));
           if (
-            (summon && otherSummon && summon?.type && otherSummon?.type && summon.type === 'LIGHT' &&
-              otherSummon.type === 'HEAVY' &&
-              (summon.team === otherSummon.team ||
-                summon.direction !== otherSummon.direction))
-            || (summon.type === 'HEAVY' &&
-              otherSummon.type === 'LIGHT' &&
-              (summon.team === otherSummon.team ||
-                summon.direction !== otherSummon.direction))
+            ((summon && otherSummon) && summon?.type && otherSummon?.type && summon?.type === 'LIGHT' &&
+              otherSummon?.type === 'HEAVY' &&
+              (summon?.team === otherSummon.team ||
+                summon?.direction !== otherSummon?.direction))
+            || (summon?.type === 'HEAVY' &&
+              otherSummon?.type === 'LIGHT' &&
+              (summon?.team === otherSummon?.team ||
+                summon?.direction !== otherSummon?.direction))
           ) {
             summon.x = nextX;
             didAnythingMove = true;
@@ -594,7 +611,7 @@ socket.onclose = () => {
           }
 
           if (
-            summon && otherSummon &&
+            (summon && otherSummon) &&
             summon.attack > 0 &&
             summon.team !== otherSummon.team &&
             summon.health > 0 &&
