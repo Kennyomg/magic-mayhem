@@ -2,11 +2,11 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Magic Mayhem</title>
-  <script src="//www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" defer></script>
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+    <script src="//www.gstatic.com/cast/sdk/libs/devtools/debug_layer/caf_receiver_logger.js"></script>
   <script type="module" crossorigin>var Ie=Object.defineProperty;var me=(n,i,r)=>i in n?Ie(n,i,{enumerable:!0,configurable:!0,writable:!0,value:r}):n[i]=r;var ce=(n,i,r)=>(me(n,typeof i!="symbol"?i+"":i,r),r);(function(){const n=document.createElement("link").relList;if(n&&n.supports&&n.supports("modulepreload"))return;for(const t of document.querySelectorAll('link[rel="modulepreload"]'))r(t);new MutationObserver(t=>{for(const a of t)if(a.type==="childList")for(const s of a.addedNodes)s.tagName==="LINK"&&s.rel==="modulepreload"&&r(s)}).observe(document,{childList:!0,subtree:!0});function i(t){const a={};return t.integrity&&(a.integrity=t.integrity),t.referrerPolicy&&(a.referrerPolicy=t.referrerPolicy),t.crossOrigin==="use-credentials"?a.credentials="include":t.crossOrigin==="anonymous"?a.credentials="omit":a.credentials="same-origin",a}function r(t){if(t.ep)return;t.ep=!0;const a=i(t);fetch(t.href,a)}})();const b=40,W=20;let de,ae,A,H,j="onorientationchange"in window&&"screen"in window,ve=j?"orientationchange":"resize";var Ee;let pe=((Ee=screen==null?void 0:screen.orientation)==null?void 0:Ee.type)||"landscape-primary";var we;(we=screen==null?void 0:screen.orientation)!=null&&we.angle;const L=document.getElementById("game"),U=document.getElementById("pause"),Te=document.getElementById("game-over");function oe(){if(de=(j?screen.height:window.innerHeight)-L.offsetTop,A=de-50,H=25/18*A,ae=Math.max(75,Math.min(100,(j?screen.width:window.innerWidth)-H-20)),H>window.innerWidth&&(H=window.innerWidth-20,A=18/25*H),L.style.width=k(H),L.style.height=k(A),U.style.top=k(A/2+L.offsetTop),Te.style.top=k(A/2+L.offsetTop),L.children.length)for(const n of L.getElementsByClassName("cell"))n.style.width=k(H/b),n.style.height=k(A/W),n.style.fontSize=k(A/W)}oe();window.addEventListener(ve,function(){j&&pe!==screen.orientation.type&&(pe=screen.orientation.type,screen.orientation.angle),oe()},!1);j&&window.addEventListener("resize",()=>oe(),!1);let C=3,T="",ne,l,_=!1,be=!1;const ee=class ee{constructor(i,r=0){this.text=i,this.ignoreFrontWidth=r}static async fromFile(i,r=0){try{return new this(ee.INLINE_SPRITES[i]||await fetch(i).then(t=>t.text()),r)}catch(t){throw console.error(t),new Error("Cannot load sprite from file")}}get lines(){return this.text.split(`
 `).filter(Boolean)}get width(){return Math.max(...this.lines.map(i=>i.length))}get collisionWidth(){return this.width-this.ignoreFrontWidth}get height(){return this.lines.length}getCharAt(i,r,t){return i<0||i>this.width||r<0||r>this.height?(console.error(`Cannot get sprite char at x: ${i} and y: ${r}`),!1):t?this.lines[r][this.width-1-i]:this.lines[r][i]}};ce(ee,"INLINE_SPRITES",{"./light.txt":";=,^<","./medium.txt":`()
 ||/
@@ -28,98 +28,17 @@ Press R or Tap here.`,i.classList.remove("hidden"),B(r,d,g,u))}}},1e3/C)}te()})(
 </head>
 
 <body style="background-color: black; color: white;">
-  <google-cast-launcher style="position:fixed;top:1rem;right:2rem;width:50px;"></google-cast-launcher>
-  <script>
-    window['__onGCastApiAvailable'] = (isAvailable) => {
-      if (isAvailable) {
-        cast.framework.CastContext.getInstance().setOptions({
-          receiverApplicationId: 'FE311E58',
-          autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-        });
-        
-        const castButton = document.querySelector('google-cast-launcher');
-        castButton.addEventListener('cast-connect', () => {
-          console.log('Connected to Cast');
-          // Send html element with id 'game' to cast device
-          cast.framework.CastContext.getInstance().getCurrentSession().sendMedia({
-            media: {
-              contentId: 'game',
-              contentType: 'text/html',
-              streamType: chrome.cast.StreamType.BUFFERED
-            }
-          });
-          
-          // cast.framework.CastContext.getInstance().getCurrentSession().
-        });
-        castButton.addEventListener('cast-disconnect', () => {
-          console.log('Disconnected from Cast');
-        });
-    
-        const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-        if (castSession) {
-          console.log('Connected to Cast');
-        }
-      }
-    };
-
-  </script>
-  <div class="mobile-landscape">
-    <div style="position: relative; width: fit-content;">
-      <h1 class="show-on-root" style="text-align: center;">Magic Mayhem</h1>
-      <!-- Playing field -->
-      <div id="game"></div>
-      <div id="pause" class="hidden">Game Paused</div>
-      <div id="game-over" class="hidden"></div>
-      <div class="show-on-root" style="font-size: large;">
-        <br>
-        <!-- List of online games -->
-        <div id="games"></div>
-        <br>
-        Game speed: <span id="game-speed">not set</span> <br><br>
-        Summons: <br> <span id="summons">not set</span> <br><br>
-        Controls: <br>
-        &nbsp;&nbsp;&nbsp;&nbsp;Spacebar - pause <br>
-        &nbsp;&nbsp;&nbsp;&nbsp;"z x c" - summon blue L M & H <br>
-        &nbsp;&nbsp;&nbsp;&nbsp;"/ . ," - summon red L M & H <br>
-        &nbsp;&nbsp;&nbsp;&nbsp;"r" - restart <br>
-        &nbsp;&nbsp;&nbsp;&nbsp;"j" - create online game <br>
-        &nbsp;&nbsp;&nbsp;&nbsp;"+" - speed up <br>
-        &nbsp;&nbsp;&nbsp;&nbsp;"-" - slow down <br>
-      </div>
-      <br class="show-on-root">
-      <div style="font-size: larger;" class="show-on-root">
-        <p style="max-width: 700px; padding: 0; margin: 0;">
-          At the Ministry of Magic, deep inside the Magic Vault, works Harold. Harold is a Magic Scribe apprentice and
-          intern in the Magic Archives. He's tasked with transcribing every single duel between summoners throughout
-          history. The deadline is 48 hours. With paper and pencil Harold presents: the epic battles of Magic Mayhem!
-        </p>
-      </div>
+    <div class="mobile-landscape">
+        <h1 style="text-align: center;">Magic Mayhem Spectator</h1>
+        <div style="position: relative; width: fit-content;">
+            <div id="game"></div>
+            <div id="pause" class="hidden">Game Paused</div>
+            <div id="game-over" class="hidden"></div>
+        </div>
     </div>
-    <div id="player-buttons" class="mobile middle left vertical">
-      <button data-summon="HEAVY" class="summon-button">H</button>
-      <button data-summon="MEDIUM" class="summon-button">M</button>
-      <button data-summon="LIGHT" class="summon-button">L</button>
-    </div>
-    <div id="opponent-buttons" class="mobile middle right vertical">
-      <button data-summon="HEAVY" class="summon-button">H</button>
-      <button data-summon="MEDIUM" class="summon-button">M</button>
-      <button data-summon="LIGHT" class="summon-button">L</button>
-    </div>
-  </div>
-  <div id="warning-message" class="mobile center top">
-    <h1>Warning!</h1>
-    <p>This game is best played in landscape.</p>
-    <p>Please turn your phone.</p>
-    <p>Thank you!</p>
-  </div>
-
-  <script defer>
-    if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
-      document.querySelectorAll('.show-on-root').forEach(el => el.style.display = 'block');
-    } else {
-      document.body.style.overflowY = 'hidden';
-    }
-  </script>
+    <script>
+        const receiverApplicationId = "FE311E58";
+    </script>
 </body>
 
 </html>

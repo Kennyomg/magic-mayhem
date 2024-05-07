@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+    <script src="//www.gstatic.com/cast/sdk/libs/devtools/debug_layer/caf_receiver_logger.js"></script>
+    <script type="module" src="../magic-mayhem.js" defer></script>
+    <link rel="stylesheet" href="../magic-mayhem.css">
+</head>
+
+<body style="background-color: black; color: white;">
+    <div class="mobile-landscape">
+        <h1 style="text-align: center;">Magic Mayhem Spectator</h1>
+        <div style="position: relative; width: fit-content;">
+            <div id="game"></div>
+            <div id="pause" class="hidden">Game Paused</div>
+            <div id="game-over" class="hidden"></div>
+        </div>
+    </div>
+    <script>
+        const receiverApplicationId = "FE311E58";
+    </script>
+</body>
+
+</html>

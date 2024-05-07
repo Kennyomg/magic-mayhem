@@ -27,6 +27,10 @@ let games: {
 // serve static files
 app.use(express.static("public"));
 
+app.get("/cast-receiver", (req, res) => {
+    res.sendFile(__dirname + "/public/cast-receiver.html");
+});
+
 app.ws("/ws", (ws: WebSocket, req) => {
     ws.on("message", (msg) => {
         const json = JSON.parse(String(msg));

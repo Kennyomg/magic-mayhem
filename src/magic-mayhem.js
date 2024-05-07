@@ -204,10 +204,12 @@ const SUMMONS_MAP = {
 
 
 const summonsEl = document.getElementById('summons');
-summonsEl.innerHTML = 'type, manacost, health, attack, speed<br/>';
-summonsEl.innerHTML += Object.values(SUMMONS_MAP).map(summon => {
-  return `${summon.type}, ${summon.mana_cost}, ${summon.health}, ${summon.attack}, ${summon.speed}`;
-}).join('<br/>');
+if (summonsEl) {
+  summonsEl.innerHTML = 'type, manacost, health, attack, speed<br/>';
+  summonsEl.innerHTML += Object.values(SUMMONS_MAP).map(summon => {
+    return `${summon.type}, ${summon.mana_cost}, ${summon.health}, ${summon.attack}, ${summon.speed}`;
+  }).join('<br/>');
+}
 
 let socket;
 if (window.location.hostname.includes('localhost') || window.location.protocol === 'http:') {
@@ -237,7 +239,7 @@ socket.onclose = () => {
 
   const gameSpeedEl = document.getElementById('game-speed');
   const gameOverEl = document.getElementById('game-over');
-  gameSpeedEl.textContent = GAME_SPEED.toString();
+  if (gameSpeedEl) gameSpeedEl.textContent = GAME_SPEED.toString();
   let level = createLevel(gameEl);
   let gamePaused = false;
   let gameOver = false;
@@ -353,21 +355,26 @@ socket.onclose = () => {
   gameOverEl.addEventListener('touchend', handleGameTap);
 
   const playerButtons = document.getElementById('player-buttons');
-  playerButtons.width = BUTTON_AREA_WIDTH;
-  for (const button of playerButtons.getElementsByClassName('summon-button')) {
-    configureButton('player', button);
+  if (playerButtons) { 
+    playerButtons.width = BUTTON_AREA_WIDTH;
+    for (const button of playerButtons.getElementsByClassName('summon-button')) {
+      configureButton('player', button);
+    }
   }
 
   const opponentButtons = document.getElementById('opponent-buttons');
-  opponentButtons.width = BUTTON_AREA_WIDTH;
-  for (const button of opponentButtons.getElementsByClassName('summon-button')) {
-    configureButton('opponent', button);
+  if (opponentButtons) {
+    opponentButtons.width = BUTTON_AREA_WIDTH;
+    for (const button of opponentButtons.getElementsByClassName('summon-button')) {
+      configureButton('opponent', button);
+    }
   }
 
   window.addEventListener('scroll', () => {
     const isGameInView = window.scrollY > gameEl.offsetTop + gameEl.clientHeight - gameEl.clientHeight / 4 * 3;
-    playerButtons.classList.toggle('hidden', isGameInView);
-    opponentButtons.classList.toggle('hidden', isGameInView);
+    if (playerButtons) playerButtons.classList.toggle('hidden', isGameInView);
+    if (opponentButtons) opponentButtons.classList.toggle('hidden', isGameInView);
+    gamePaused = !isGameInView;
   });
 
   socket.onmessage = ({ data }) => {
@@ -376,7 +383,7 @@ socket.onclose = () => {
     switch (msg.type) {
       case 'broadcast': {
         console.log('Broadcast', msg);
-        if (online_game) return;
+        if (online_game || !gamesEl) return;
         if (Array.isArray(msg.data)) {
           gamesEl.innerHTML = '';
           let gameNumber = 1;
