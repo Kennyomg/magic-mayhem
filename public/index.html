@@ -28,12 +28,12 @@ Press R or Tap here.`,i.classList.remove("hidden"),W(r,d,g,u))}}},1e3/N)}te()})(
 </head>
 
 <body style="background-color: black; color: white;">
-  <google-cast-launcher></google-cast-launcher>
+  <google-cast-launcher style="position:fixed;top:1rem;right:2rem;width:50px;"></google-cast-launcher>
   <script>
     window['__onGCastApiAvailable'] = (isAvailable) => {
       if (isAvailable) {
         cast.framework.CastContext.getInstance().setOptions({
-          receiverApplicationId: '77C051C3',
+          receiverApplicationId: 'FE311E58',
           autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
         });
         
@@ -48,6 +48,8 @@ Press R or Tap here.`,i.classList.remove("hidden"),W(r,d,g,u))}}},1e3/N)}te()})(
               streamType: chrome.cast.StreamType.BUFFERED
             }
           });
+          
+          // cast.framework.CastContext.getInstance().getCurrentSession().
         });
         castButton.addEventListener('cast-disconnect', () => {
           console.log('Disconnected from Cast');
