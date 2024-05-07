@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "start": "bun run server.ts",
-    "dev": "bun --watch server.ts",
+    "dev": "start bun --watch server.ts && start bunx --bun vite build ./src -c ./vite.config.ts --outDir ../public --watch",
+    "dev:linux": "bun --watch server.ts & bunx --bun vite build ./src -c ./vite.config.ts --outDir ../public --watch",
     "build": "bunx --bun vite build ./src -c ./vite.config.ts --outDir ../public"
   },
   "devDependencies": {

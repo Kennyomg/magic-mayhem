@@ -24,6 +24,14 @@
         const castButton = document.querySelector('google-cast-launcher');
         castButton.addEventListener('cast-connect', () => {
           console.log('Connected to Cast');
+          // Send html element with id 'game' to cast device
+          cast.framework.CastContext.getInstance().getCurrentSession().sendMedia({
+            media: {
+              contentId: 'game',
+              contentType: 'text/html',
+              streamType: chrome.cast.StreamType.BUFFERED
+            }
+          });
         });
         castButton.addEventListener('cast-disconnect', () => {
           console.log('Disconnected from Cast');
