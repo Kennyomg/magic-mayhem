@@ -13,7 +13,7 @@ let GAME_SCREEN_WIDTH;
 // Detect whether device supports orientationchange event, otherwise fall back to
 // the resize event.
 let supportsOrientationChange = "onorientationchange" in window && "screen" in window;
-let orientationEvent = supportsOrientationChange ? "orientationchange" : ["orientationchange", "resize"];
+let orientationEvent = supportsOrientationChange ? ["orientationchange", "resize"] : "resize";
 
 let screenOrientationType = screen?.orientation?.type || "landscape-primary";
 let screenOrientationAngle = screen?.orientation?.angle || 0;
