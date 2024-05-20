@@ -13,32 +13,30 @@ let GAME_SCREEN_WIDTH;
 // Detect whether device supports orientationchange event, otherwise fall back to
 // the resize event.
 let supportsOrientationChange = "onorientationchange" in window && "screen" in window;
-let orientationEvent = supportsOrientationChange ? "orientationchange" : "resize";
+let orientationEvent = supportsOrientationChange ? "orientationchange" : ["orientationchange", "resize"];
 
 let screenOrientationType = screen?.orientation?.type || "landscape-primary";
 let screenOrientationAngle = screen?.orientation?.angle || 0;
-
-const pauseEl = document.getElementById('pause');
 
 function setGameDimensions() {
   Elements.applyOn('game', (gameEl) => {
     WINDOW_AVAILABLE_HEIGHT = (supportsOrientationChange ? screen.height : window.innerHeight) - gameEl.offsetTop;
     GAME_SCREEN_HEIGHT = WINDOW_AVAILABLE_HEIGHT - 50;
     GAME_SCREEN_WIDTH = 25 / 18 * GAME_SCREEN_HEIGHT;
-  
+
     BUTTON_AREA_WIDTH = Math.max(75, Math.min(100, (supportsOrientationChange ? screen.width : window.innerWidth) - GAME_SCREEN_WIDTH - 20));
-  
+
     if (GAME_SCREEN_WIDTH > window.innerWidth) {
       GAME_SCREEN_WIDTH = window.innerWidth - 20;
       GAME_SCREEN_HEIGHT = 18 / 25 * GAME_SCREEN_WIDTH;
     }
-  
+
     gameEl.style.width = px(GAME_SCREEN_WIDTH);
     gameEl.style.height = px(GAME_SCREEN_HEIGHT);
     Elements.applyOn(['pause', 'game-over'], (el) => {
       el.style.top = px(GAME_SCREEN_HEIGHT / 2 + gameEl.offsetTop);
     });
-  
+
     if (gameEl.children.length) {
       for (const cell of gameEl.getElementsByClassName('cell')) {
         cell.style.width = px(GAME_SCREEN_WIDTH / LEVEL_WIDTH);
@@ -50,51 +48,21 @@ function setGameDimensions() {
 }
 
 setGameDimensions();
-window.addEventListener(orientationEvent, () => {
+EventManager.on(orientationEvent, () => {
   if (supportsOrientationChange && screenOrientationType !== screen.orientation.type) {
     screenOrientationType = screen.orientation.type;
     screenOrientationAngle = screen.orientation.angle;
   }
   setGameDimensions();
-}, false);
-if (supportsOrientationChange) {
-  window.addEventListener('resize', () => setGameDimensions(), false);
-}
+}, window);
 
+// TODO put this in a game context object and game State Machine
 let GAME_SPEED = 3
-
 let peer_id = '';
 let peer;
 let online_game;
 let isHost = false;
 let isSpectator = false;
-
-// const SUMMONER_TXT = `
-//  x
-// / \\ * *
-// | | /*
-// / \\/
-// | |
-// `;
-// const SUMMONER_SPRITE = {
-//   text: '',
-//   get lines() { return this.text.split('\n').filter(Boolean); },
-//   get width() {
-//     return Math.max(...this.lines.map(line => line.length)); 
-//   },
-//   get height() { return this.lines.length; },
-//   getCharAt(x, y, flipped) {
-//     if (x < 0 || x > this.width || y < 0 || y > this.height) {
-//       console.error(`Cannot get sprite char at x: ${x} and y: ${y}`);
-//       return false;
-//     }
-//     if (flipped) {
-//       return this.lines[y][this.width - 1 - x];
-//     }
-//     return this.lines[y][x];
-//   }
-// }
-
 
 class Sprite {
   static INLINE_SPRITES = {
@@ -171,7 +139,8 @@ const CELL_MAP = {
 const SUMMONS_MAP = {
   LIGHT: {
     type: 'LIGHT',
-    x: 1,
+    _x: 1,
+    get x() { return this._x; },
     y: GROUND_Y - 1,
     sprite: undefined,
     speed: 2,
@@ -203,6 +172,35 @@ const SUMMONS_MAP = {
     mana_cost: 3,
   }
 };
+
+class Summon {
+  constructor({type, x, y, direction, sprite, color, speed, health, attack, team, mana_cost}) {
+    this.type = type;
+    this._x = x;
+    this.y = y;
+    this.direction = direction;
+    this.sprite = sprite;
+    this.speed = speed;
+    this.health = health;
+    this.attack = attack;
+    this.team = team;
+    this.color = color;
+    this.mana_cost = mana_cost;
+  }
+
+  get x() { 
+    return this.direction > 0 ? this._x : this._x + this.sprite.ignoreFrontWidth;
+  }
+
+  get width() {
+    return this.sprite.collisionWidth;
+  }
+
+  set x(value) {
+    this._x = value;
+  }
+
+}
 
 
 
@@ -245,6 +243,7 @@ socket.onclose = () => {
 
   let level = createLevel(Elements.findId('game'));
   let gamePaused = false;
+  let manualPause = false;
   let gameOver = false;
   let drawCounter = 0;
   let didAnythingMove = false;
@@ -262,14 +261,14 @@ socket.onclose = () => {
 
     SUMMONS_MAP.LIGHT.sprite = await Sprite.fromFile('./light.txt');
     SUMMONS_MAP.MEDIUM.sprite = await Sprite.fromFile('./medium.txt');
-    SUMMONS_MAP.HEAVY.sprite = await Sprite.fromFile('./heavy.txt', 3);
+    SUMMONS_MAP.HEAVY.sprite = await Sprite.fromFile('./heavy.txt', 4);
 
     console.log(SUMMONS_MAP);
   } catch (err) {
     console.error(err)
   }
 
-  function restartGame(event) {
+  function restartGame({event}) {
     if (event) {
       event.preventDefault();
       event.stopPropagation();
@@ -304,20 +303,20 @@ socket.onclose = () => {
       }
     }
   }
+  EventManager.on('restartGame', restartGame);
 
-  function togglePause(event, forcePause = -1) {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-      event.stopImmediatePropagation();
-    }
-
+  function togglePause({ forcePause = -1 }) {
     gamePaused = forcePause < 0 ? !gamePaused : forcePause;
-    document.getElementById('pause').classList.toggle('hidden', !gamePaused);
+    if (manualPause) gamePaused = true;
+    Elements.applyOn('pause', (el) => {
+      el.classList.toggle('hidden', !gamePaused);
+    })
   }
+  EventManager.on('togglePause', togglePause);
+
 
   function configureButton(who, button) {
-    function handleSummon(event) {
+    function handleSummon({event}) {
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
@@ -331,24 +330,22 @@ socket.onclose = () => {
         opponentSpawningSummon = button.dataset.summon;
       }
     }
-
+    console.log({ who, button });
     EventManager.on(['click', 'touchend'], handleSummon, button);
-    button.addEventListener('click', handleSummon);
-    button.addEventListener('touchend', handleSummon);
   }
 
   let touchMoved = false;
-  function handleGameTap(event) {
+  function handleGameTap({ event }) {
     if (touchMoved) return touchMoved = false;
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
 
     if (gameOver) {
-      restartGame();
+      EventManager.emit('restartGame');
       return;
     }
-    togglePause();
+    EventManager.emit('togglePause');
   }
 
   const els = Elements.findId(['game', 'pause', 'game-over']);
@@ -360,15 +357,17 @@ socket.onclose = () => {
     const target = id === 'player-buttons' ? 'player' : 'opponent';
     el.width = BUTTON_AREA_WIDTH;
     for (const button of el.getElementsByClassName('summon-button')) {
+      console.log({ target, button, el, id })
       configureButton(target, button);
     }
     EventManager.on('scroll', ({ isGameInView }) => {
       el.classList.toggle('hidden', !isGameInView());
-    });
+    }, window);
   });
 
-  EventManager.on('scroll', ({ isGameInView }) => togglePause(null, !isGameInView()));
-  EventManager.attachTo('scroll', window);
+  EventManager.on('scroll', ({ isGameInView }) =>
+    EventManager.emit('togglePause', { forcePause: !isGameInView() })
+    , window);
 
   socket.onmessage = ({ data }) => {
     const msg = JSON.parse(data);
@@ -446,7 +445,7 @@ socket.onclose = () => {
     }
   };
 
-  window.addEventListener('keydown', async (e) => {
+  EventManager.on('keydown', async ({event: e}) => {
     switch (e.key) {
       case 'j':
         if (!peer_id) peer_id = await getPeerId();
@@ -456,11 +455,12 @@ socket.onclose = () => {
       case ' ':
         e.preventDefault();
         if (gameOver) break;
-        togglePause();
+        manualPause = !gamePaused;
+        EventManager.emit('togglePause', { forcePause: manualPause });
         break;
       case 'r':
       case 'R':
-        restartGame();
+        EventManager.emit('restartGame');
         break;
       case 'z':
         if (gamePaused) break;
@@ -522,7 +522,7 @@ socket.onclose = () => {
           Elements.applyOn('game-speed', (el) => {
             el.textContent = GAME_SPEED.toString();
           });
-          resetInterval();
+          EventManager.emit('resetInterval');
         }
         break;
       case '-':
@@ -531,11 +531,11 @@ socket.onclose = () => {
           Elements.applyOn('game-speed', (el) => {
             el.textContent = GAME_SPEED.toString();
           });
-          resetInterval();
+          EventManager.emit('resetInterval');
         }
         break;
     }
-  });
+  }, window);
 
 
   let interval = null;
@@ -563,7 +563,7 @@ socket.onclose = () => {
       if (!online_game || isHost) {
         if (
           playerSpawningSummon &&
-          !summons.some(summon => summon.team === 'player' && isRectangleInRectangle(PLAYER_PORTAL_X, PLAYER_PORTAL_Y, SUMMONS_MAP[playerSpawningSummon]?.sprite?.collisionWidth, 1, summon.x, summon.y, summon.sprite.width, summon.sprite.height))
+          !summons.some(summon => summon.team === 'player' && isRectangleInRectangle(PLAYER_PORTAL_X, PLAYER_PORTAL_Y, SUMMONS_MAP[playerSpawningSummon]?.sprite.collisionWidth, 1, summon.x, summon.y, summon.width, summon.sprite.height))
         ) {
           if (playerMana >= SUMMONS_MAP[playerSpawningSummon].mana_cost && playerMana >= playerMana - SUMMONS_MAP[playerSpawningSummon].mana_cost) {
             playerMana -= SUMMONS_MAP[playerSpawningSummon].mana_cost;
@@ -573,7 +573,7 @@ socket.onclose = () => {
         }
         if (
           opponentSpawningSummon &&
-          !summons.some(summon => summon.team === 'opponent' && isRectangleInRectangle(OPPONENT_PORTAL_X - SUMMONS_MAP[opponentSpawningSummon]?.sprite?.collisionWidth, OPPONENT_PORTAL_Y, OPPONENT_PORTAL_X, 1, summon.x, summon.y, summon.sprite.width, summon.sprite.height))
+          !summons.some(summon => summon.team === 'opponent' && isRectangleInRectangle(OPPONENT_PORTAL_X - SUMMONS_MAP[opponentSpawningSummon]?.sprite?.collisionWidth, OPPONENT_PORTAL_Y, OPPONENT_PORTAL_X, 1, summon.x, summon.y, summon.width, summon.sprite.height))
         ) {
           if (opponentMana >= SUMMONS_MAP[opponentSpawningSummon].mana_cost && opponentMana >= opponentMana - SUMMONS_MAP[opponentSpawningSummon].mana_cost) {
             opponentMana -= SUMMONS_MAP[opponentSpawningSummon].mana_cost;
@@ -586,19 +586,18 @@ socket.onclose = () => {
       drawLevel(level, summons, playerMana, opponentMana);
 
       for (const summon of summons) {
-        const nextX = summon.x + summon.speed * summon.direction;
+        const nextX = summon._x + (summon.speed * summon.direction);
 
-        if (!summons.some(otherSummon => otherSummon !== summon
-          && isRectangleInRectangle(nextX, summon.y, summon.sprite.collisionWidth, summon.sprite.height, otherSummon.x, otherSummon.y, otherSummon.sprite.collisionWidth, otherSummon.sprite.height))) {
-          if (nextX > 0 && nextX < LEVEL_WIDTH - summon.sprite.collisionWidth) {
-            summon.x = nextX;
-          } else {
-            summon.x = nextX <= 0 ? 1 : LEVEL_WIDTH - summon.sprite.collisionWidth - 1;
-            summon.direction *= -1;
-          }
-          didAnythingMove = true;
+        const otherSummon = summons.find(otherSummon => willSummonsCollide(nextX, summon, otherSummon));
+        if (!otherSummon) {
+            if (nextX > (summon.direction > 0 ? 0 : 0 - summon.sprite.ignoreFrontWidth) && nextX < LEVEL_WIDTH - summon.width) {
+              summon.x = nextX;
+            } else {
+              summon.x = nextX <= 0 ? 1 : (LEVEL_WIDTH - summon.width - 1 - summon.sprite.ignoreFrontWidth);
+              summon.direction *= -1;
+            }
+            didAnythingMove = true;
         } else {
-          const otherSummon = summons.find(otherSummon => otherSummon !== summon && isRectangleInRectangle(nextX, summon.y, summon.sprite.collisionWidth, summon.sprite.height, (otherSummon.direction > 0 ? otherSummon.x : otherSummon.x + otherSummon.sprite.ignoreFrontWidth), otherSummon.y, otherSummon.sprite.collisionWidth, otherSummon.sprite.height));
           if (
             ((summon && otherSummon) && summon?.type && otherSummon?.type && summon?.type === 'LIGHT' &&
               otherSummon?.type === 'HEAVY' &&
@@ -669,8 +668,17 @@ socket.onclose = () => {
       }
     }, 1000 / GAME_SPEED);
   }
-  resetInterval();
+  EventManager.on('resetInterval', resetInterval);
+  EventManager.emit('resetInterval');
+
 })();
+
+function willSummonsCollide(nextX, summon1, summon2) {
+  return (summon1 !== summon2 && 
+    isRectangleInRectangle(summon1.direction > 0 ? nextX : nextX + summon1.sprite.ignoreFrontWidth, summon1.y, summon1.width, summon1.sprite.height, 
+                      summon2.direction > 0 ? summon2._x : summon2._x + summon2.sprite.ignoreFrontWidth, summon2.y, summon2.width, summon2.sprite.height));
+}
+
 
 function px(value) {
   return `${value}px`;
@@ -704,13 +712,13 @@ function createSummon(team, summon) {
     throw new Error('Invalid team');
   }
 
-  return {
+  return new Summon({
     ...SUMMONS_MAP[summon],
     x: team === 'player' ? PLAYER_PORTAL_X : OPPONENT_PORTAL_X - SUMMONS_MAP[summon].sprite.width + 1,
     direction: team === 'player' ? 1 : -1,
     color: team === 'player' ? PLAYER_COLOR : OPPONENT_COLOR,
     team
-  };
+  });
 }
 
 function createLevel(gameEl) {
@@ -759,7 +767,7 @@ function drawLevel(level, summons, playerMana, opponentMana) {
       const isOpponentPortal = x === OPPONENT_PORTAL_X && y === OPPONENT_PORTAL_Y;
       const isPlayerManaBar = playerMana && (x === 1 || x <= playerMana) && y === 1;
       const isOpponentManaBar = opponentMana && (x === LEVEL_WIDTH - 2 || x >= LEVEL_WIDTH - 1 - opponentMana) && y === 1;
-      const isSummon = summons.some(summon => isPointInRectangle(x, y, summon.x, summon.y, summon.sprite.width, summon.sprite.height));
+      const isSummon = summons.some(summon => isPointInRectangle(x, y, summon._x, summon.y, summon.sprite.width, summon.sprite.height));
 
 
       switch (true) {
@@ -794,11 +802,11 @@ function drawLevel(level, summons, playerMana, opponentMana) {
           break;
         }
         case (isSummon): {
-          const foundSummons = summons.filter(summon => isPointInRectangle(x, y, summon.x, summon.y, summon.sprite.width, summon.sprite.height));
+          const foundSummons = summons.filter(summon => isPointInRectangle(x, y, summon._x, summon.y, summon.sprite.width, summon.sprite.height));
           // let drewOnEmpty = false;
           foundSummons.forEach(summon => {
             const isFacingLeft = summon.direction === -1;
-            const char = summon.sprite.getCharAt(x - summon.x, y - summon.y + summon.sprite.height - 1, isFacingLeft);
+            const char = summon.sprite.getCharAt(x - summon._x, y - summon.y + summon.sprite.height - 1, isFacingLeft);
             // if (!cell.textContent && char) {
             cell.classList.toggle('reversed', isFacingLeft);
             cell.textContent = char;
