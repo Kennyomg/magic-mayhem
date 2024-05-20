@@ -202,8 +202,6 @@ class Summon {
 
 }
 
-
-
 Elements.applyOn('summons', (el) => {
   el.innerHTML = 'type, manacost, health, attack, speed<br/>';
   el.innerHTML += Object.values(SUMMONS_MAP).map(summon => {
@@ -211,6 +209,7 @@ Elements.applyOn('summons', (el) => {
   }).join('<br/>');
 });
 
+// TODO move socketry into a separate module
 let socket;
 if (window.location.hostname.includes('localhost') || window.location.protocol === 'http:') {
   socket = new WebSocket(`ws://${window.location.host}/ws`);
@@ -241,6 +240,7 @@ socket.onclose = () => {
     el.textContent = GAME_SPEED.toString();
   });
 
+  // TODO Wrangle globals
   let level = createLevel(Elements.findId('game'));
   let gamePaused = false;
   let manualPause = false;
